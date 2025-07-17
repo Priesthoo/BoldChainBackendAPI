@@ -1,10 +1,11 @@
 ﻿using BoldChainBackendAPI.BoldChainModel.BoldChainEntities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace BoldChainBackendAPI.BoldChainData
 {
-    public class BoldChainContext:IdentityDbContext<User>
+    public class BoldChainContext:IdentityDbContext<User,ApplicationRole,Guid>
     {
         public BoldChainContext(DbContextOptions<BoldChainContext> options) : base(options) { }
         
@@ -17,7 +18,7 @@ namespace BoldChainBackendAPI.BoldChainData
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-           modelBuilder.Entity<User>().HasIndex(u=>u.Email).IsUnique();
+          
             modelBuilder.Entity<MessageMeta>().HasOne(t => t.Sender).WithMany(t => t.Inbox).HasForeignKey(m => m.SenderId).OnDelete(DeleteBehavior.NoAction);
             modelBuilder.Entity<MessageMeta>().HasOne(t=>t.Recipient).WithMany(t => t.Outbox).HasForeignKey(m => m.RecipientId);
             

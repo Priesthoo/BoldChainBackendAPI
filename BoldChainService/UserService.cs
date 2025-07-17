@@ -3,6 +3,9 @@ using BoldChainBackendAPI.BoldChainInterface;
 using BoldChainBackendAPI.BoldChainModel.BoldChainDto;
 using BoldChainBackendAPI.BoldChainModel.BoldChainEntities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
+using BoldChainBackendAPI.BoldChainException;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace BoldChainBackendAPI.BoldChainService
 {
@@ -13,8 +16,10 @@ namespace BoldChainBackendAPI.BoldChainService
         private readonly ITokenService _jwtService;
         private readonly IWalletService _walletService;
         private readonly IKeyService _keyService;
+        private readonly ILogger<UserService> _logger;  
         
         private readonly IBoldIdentity _identity;
+        private readonly IIdentityRegistryService _identityRegistryService;
 
         public UserService(
             UserManager<User> userManager,
@@ -22,7 +27,9 @@ namespace BoldChainBackendAPI.BoldChainService
             ITokenService jwtService,
             IWalletService walletService,
             IKeyService keyService,
-            IBoldIdentity identity)
+            IBoldIdentity identity,
+            IIdentityRegistryService identityRegistryService,
+            ILogger<UserService> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -30,12 +37,17 @@ namespace BoldChainBackendAPI.BoldChainService
             _walletService = walletService;
             _keyService = keyService;
             _identity = identity;
+            _identityRegistryService=identityRegistryService;
+            _logger=logger;
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
         {
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
             if (existingUser != null) throw new Exception("Email already in use");
+            ValidatiionHelper.ValidatePassword(dto.Password);
+            ValidatiionHelper.ValidateEmail(dto.Email);
+            ValidatiionHelper.ValidateUsername(dto.UserName);
 
             // Generate Ethereum Wallet
             var wallet = _walletService.GenerateWallet();
@@ -51,10 +63,14 @@ namespace BoldChainBackendAPI.BoldChainService
                 PublicKey = rsaKeys.PublicKeyPem,
                 EncryptedPrivateKey = rsaKeys.PrivateKeyPem //  store securely
             };
+            _logger.LogInformation("User Creation Beginning");
 
             var result = await _userManager.CreateAsync(user, dto.Password);
-            await _identity.RegisterIdentityAsync(dto.Email, wallet.Address);
-            if (!result.Succeeded) throw new Exception("User creation failed");
+           
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("User Creation Failed for  {user}:{errors}",dto.Email,string.Join(",",result.Errors.Select(e=>e.Description)));
+            }
 
             var token =  _jwtService.GenerateJwtToken(user);
 

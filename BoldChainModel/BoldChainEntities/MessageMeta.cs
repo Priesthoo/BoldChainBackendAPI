@@ -14,12 +14,14 @@ namespace BoldChainBackendAPI.BoldChainModel.BoldChainEntities
         public string TrustStamp { get; set; }
         public DateTime TimeStamp { get; set; } = DateTime.UtcNow;
       
-        public string SenderId { get; set; }
+        [ForeignKey("Sender")]
+        public Guid SenderId { get; set; }
        
         public User Sender { get; set; }
       
         public User Recipient {  get; set; }
     
-        public string RecipientId { get; set; }
+        [ForeignKey("Recipient")]
+        public Guid RecipientId { get; set; }
     }
 }

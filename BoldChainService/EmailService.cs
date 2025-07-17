@@ -55,7 +55,7 @@
             }
             else
             {
-                Console.WriteLine("🔒 Email sending is disabled (SendRealEmails = false)");
+                Console.WriteLine(" Email sending is disabled (SendRealEmails = false)");
                 Console.WriteLine($"To: {message.To}");
                 Console.WriteLine($"Subject: {message.Subject}");
                 Console.WriteLine($"Body: {message.TextBody}");

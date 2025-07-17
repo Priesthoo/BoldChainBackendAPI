@@ -1,18 +1,29 @@
 using BoldChainBackendAPI.BoldChainConfiguration;
 using BoldChainBackendAPI.BoldChainData;
+using BoldChainBackendAPI.BoldChainException;
 using BoldChainBackendAPI.BoldChainInterface;
 using BoldChainBackendAPI.BoldChainModel.BoldChainEntities;
 using BoldChainBackendAPI.BoldChainService;
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Serilog;
+
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .WriteTo.Console());
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -24,7 +35,7 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Emai
 
 
 builder.Services.AddDbContext<BoldChainContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddIdentity<User,IdentityRole>().AddEntityFrameworkStores<BoldChainContext>().AddDefaultTokenProviders();
+builder.Services.AddIdentity<User,ApplicationRole>().AddEntityFrameworkStores<BoldChainContext>().AddDefaultTokenProviders();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -87,6 +98,10 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
+ // for .NET 6/7+
+
+
 //Services
 builder.Services.AddScoped<IIdentityRegistryService,IdentityRegistryService>();
 builder.Services.AddScoped<ITrustStampService, TrustStampService>();
@@ -119,7 +134,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "BoldChain API v1");
-        options.RoutePrefix = string.Empty; // Swagger UI at root
+        options.RoutePrefix = "swagger"; // Swagger UI at root
     });
 }
 
@@ -131,3 +146,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+    

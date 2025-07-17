@@ -2,7 +2,7 @@
 
 namespace BoldChainBackendAPI.BoldChainModel.BoldChainEntities
 {
-    public class User:IdentityUser
+    public class User:IdentityUser<Guid>
     {
         public string UserName { get; set; }
         public string Email { get; set; }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BoldChainBackendAPI.BoldChainController
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
